@@ -1,0 +1,17 @@
+﻿services:
+  casetrack:
+    image: casetrack
+    build:
+      context: .
+      dockerfile: CaseTrack/Dockerfile
+    environment:
+      ConnectionStrings__CaseTrackConnection: Host=postgres;Username=casetrack;Password=${DATABASE_PASSWORD};Database=casetrack;
+      
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: casetrack
+      POSTGRES_USER: casetrack
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - 5432:5432
