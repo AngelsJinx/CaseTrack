@@ -4,6 +4,9 @@
     build:
       context: .
       dockerfile: CaseTrack/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       ConnectionStrings__CaseTrackConnection: Host=postgres;Username=casetrack;Password=${DATABASE_PASSWORD};Database=casetrack;
       
