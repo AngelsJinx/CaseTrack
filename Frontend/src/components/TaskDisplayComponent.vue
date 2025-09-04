@@ -1,13 +1,10 @@
 <template>
   <q-card class="task-card">
-    <q-card-section class="text-h6 q-pb-sm">{{props.task.title}}</q-card-section>
+    <q-card-section class="q-pb-sm row justify-between">
+      <div class="text-h6 col-lg col-xs-12">{{props.task.title}}</div>
+      <div class="col-grow q-my-auto"><q-icon name="event" size="sm" class="q-mr-xs" />Due: {{props.task.dueDate.toLocaleString()}}</div>
+    </q-card-section>
     <q-card-section class="q-pt-none">
-      <div>
-        <span>
-          Due:
-        </span>
-        <span>{{props.task.dueDate.toLocaleString()}}</span>
-      </div>
       <div class="description">{{ props.task.description }}</div>
     </q-card-section>
   </q-card>
