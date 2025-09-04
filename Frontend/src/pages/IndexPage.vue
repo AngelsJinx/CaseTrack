@@ -1,10 +1,10 @@
 <template>
   <q-page class="row justify-evenly no-wrap">
     <q-card v-for="column of columns" :key="column.status" class="q-mx-sm q-my-md col-xs-6 col-sm-4 col-md-3 col-lg task-list">
-      <q-card-section class="text-h5">
+      <q-card-section class="text-h5 bg-white">
         {{ column.name }}
       </q-card-section>
-      <q-card-section class="bg-blue-grey-3 task-list">
+      <q-card-section class="task-list">
         <task-display-component v-for="task of tasks.filter(t => t.status === column.status)" :key="task.id" :task="task" />
       </q-card-section>
     </q-card>
@@ -49,5 +49,6 @@ const columns: TaskColumn[] = [
 <style lang="scss" scoped>
 .task-list {
   height: calc(100% - 55px);
+  background-color: $light-grey;
 }
 </style>
