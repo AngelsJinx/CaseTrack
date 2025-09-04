@@ -2,13 +2,24 @@
   casetrack:
     image: casetrack
     build:
-      context: .
+      context: ./Backend
       dockerfile: CaseTrack/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       ConnectionStrings__CaseTrackConnection: Host=postgres;Username=casetrack;Password=${DATABASE_PASSWORD};Database=casetrack;
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - 9876:8080
+  
+  casetrack-frontend:
+    image: casetrack-frontend
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    ports:
+      - 8080:80
       
   postgres:
     image: postgres
@@ -16,5 +27,11 @@
       POSTGRES_DB: casetrack
       POSTGRES_USER: casetrack
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
