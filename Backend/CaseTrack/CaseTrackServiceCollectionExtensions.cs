@@ -17,10 +17,6 @@ public static class CaseTrackServiceCollectionExtensions
         // Register the database connection.
         // There's an argument for this being part of the CaseTrack.Data service injection, but I like it in this project as it's the entrypoint.
         var connectionString = configuration.GetConnectionString("CaseTrackConnection");
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            throw new Exception("No connection string configured");
-        }
         services
             .AddDbContext<CaseTrackContext>(options => options.UseNpgsql(connectionString))
             .AddCaseTrackDataServices(configuration);

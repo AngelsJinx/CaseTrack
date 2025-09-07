@@ -42,3 +42,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Expose this magic implicit Program class for tests.
+public partial class Program { }
