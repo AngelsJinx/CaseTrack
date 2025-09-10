@@ -5,22 +5,21 @@
         {{ column.name }}
       </q-card-section>
       <q-card-section class="task-list">
-        <task-display-component v-for="task of tasks.filter(t => t.status === column.status)" :key="task.id" :task="task" />
+        <task-display-component v-for="task of taskStore.tasks?.filter(t => t.status === column.status)" :key="task.id" :task="task" />
       </q-card-section>
     </q-card>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue';
 import TaskDisplayComponent from "components/TaskDisplayComponent.vue";
-import {Task, TaskStatus} from "components/models";
-import {DateTime} from "luxon";
+import {TaskStatus} from "components/models";
+import {useTaskStore} from "stores/taskStore";
 
-const tasks = ref<Task[]>([
-  new Task(0, 'Dummy task', 'With a description', TaskStatus.pending, DateTime.now()),
-  new Task(0, 'Do the things', 'Do great things, with great responsibilities. Impress folks. Be happy. Spread joy.', TaskStatus.inProgress, DateTime.now())
-]);
+const taskStore = useTaskStore();
+
+taskStore.fetchTasks()
+  .catch(console.error); // Should use proper error logging!
 
 interface TaskColumn {
   name: string;
@@ -48,7 +47,7 @@ const columns: TaskColumn[] = [
 </script>
 <style lang="scss" scoped>
 .task-list {
-  height: calc(100% - 55px);
+  //height: calc(100% - 55px);
   background-color: $light-grey;
 }
 </style>

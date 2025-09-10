@@ -7,6 +7,12 @@ export enum TaskStatus {
   completed,
 }
 
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  payload: T;
+}
+
 export class Task {
   id: number;
   title: string;
