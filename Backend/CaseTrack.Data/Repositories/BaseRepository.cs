@@ -20,7 +20,7 @@ public abstract class BaseRepository<T>(CaseTrackContext context) : IRepository<
 
     public Task<T?> Get(long id)
     {
-        return GetDbSet().SingleOrDefaultAsync(x => x.Id == id);
+        return GetQueryable().SingleOrDefaultAsync(x => x.Id == id);
     }
 
     public ValueTask<EntityEntry<T>> Add(T task)
@@ -30,6 +30,10 @@ public abstract class BaseRepository<T>(CaseTrackContext context) : IRepository<
 
     public EntityEntry<T> Remove(T task)
     {
+        // This hard-deletes the task row from the database.
+        // However it could instead soft-delete by setting a deletedAt timestamp or equivalent.
+        // If soft-deletes were implemented, the GetQueryable() method should be updated to take an optional 'includeDeleted' parameter, and exclude deleted rows by default.
+        // This could be applied to all entities, or handled by a SoftDeleteRepository child class.
         return GetDbSet().Remove(task);
     }
 

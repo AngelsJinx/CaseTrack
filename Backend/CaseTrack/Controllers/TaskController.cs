@@ -35,4 +35,31 @@ public class TaskController(TaskModule taskModule) : BaseController
         
         return ToApiResponse(task);
     }
+
+    /// <summary>
+    /// Upsert a specific task.
+    /// </summary>
+    /// <param name="task">Task details</param>
+    /// <returns>ApiResponse containing the persisted task, or an error response.</returns>
+    [HttpPost]
+    public async Task<ActionResult<ApiResponseDto<TaskDto>>> Post([FromBody] TaskDto task)
+    {
+        try
+        {
+            if (task.Id.HasValue)
+            {
+                return ToApiResponse(await taskModule.UpdateTask(task));
+            }
+
+            return ToApiResponse(await taskModule.InsertTask(task));
+        }
+        catch (InvalidOperationException)
+        {
+            return ToApiError<TaskDto>(null, "Task not valid.");
+        }
+        catch (KeyNotFoundException)
+        {
+            return ToApiError<TaskDto>(null, "Task not found.", (int)HttpStatusCode.NotFound);
+        }
+    }
 }

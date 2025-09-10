@@ -2,4 +2,4 @@
 
 namespace CaseTrack.DTOs;
 
-public record TaskDto(string Title, string? Description, TaskStatus Status, DateTimeOffset DueDate);
+public record TaskDto(long? Id, string Title, string? Description, TaskStatus Status, DateTimeOffset DueDate);
