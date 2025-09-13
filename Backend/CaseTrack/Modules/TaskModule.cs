@@ -5,6 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CaseTrack.Modules;
 
+public enum TaskActionStatus
+{
+    NotFound,
+    Success,
+    ValidationError
+}
+
+public record TaskActionResult(TaskActionStatus TaskActionStatus, string? Message, TaskDto? Task);
+
 /// <summary>
 /// Module for business-logic relating to Tasks.
 /// </summary>
@@ -44,11 +53,18 @@ public class TaskModule(IRepository<CaseTrackTask> taskRepository)
     /// Create a new task and persist it to the database.
     /// </summary>
     /// <param name="dto">Task details</param>
-    /// <returns>Task persisted to the database.</returns>
-    /// <exception cref="InvalidOperationException">Raised when the <see cref="dto"/> already has an ID populated. Use <see cref="UpdateTask"/> to update existing tasks.</exception>
-    public async Task<TaskDto> InsertTask(TaskDto dto)
+    /// <returns>Result object containing the inserted task details, or error details if unsuccessful.</returns>
+    public async Task<TaskActionResult> InsertTask(TaskDto dto)
     {
-        if (dto.Id is not null) throw new InvalidOperationException("Cannot insert task with specific ID");
+        if (dto.Id is not null)
+        {
+            return new TaskActionResult(TaskActionStatus.ValidationError, "ID cannot be specified for inserts.", null);
+        }
+        // DueDate needs to be in the future, but we'll allow a small grace period for anyone setting a due date to the 'current time' on a slow connection
+        if (dto.DueDate < DateTimeOffset.UtcNow.AddSeconds(10))
+        {
+            return new TaskActionResult(TaskActionStatus.ValidationError, "Due date cannot be in the past.", null);
+        }
 
         var newTask = new CaseTrackTask()
         {
@@ -61,22 +77,31 @@ public class TaskModule(IRepository<CaseTrackTask> taskRepository)
         await _taskRepository.SaveChanges();
 
         // Returning the EntityEntry value as EF will have populated Created/Id while saving.
-        return ToTaskDto(taskEntity.Entity);
+        return new TaskActionResult(TaskActionStatus.Success, null, ToTaskDto(taskEntity.Entity));
     }
 
     /// <summary>
     /// Update the specified task.
     /// </summary>
     /// <param name="dto">Updated details.</param>
-    /// <returns>Updated task.</returns>
-    /// <exception cref="InvalidOperationException">Raised when the <see cref="dto"/> doesn't specify the ID of an existing task. Use <see cref="InsertTask"/> to create a new task.</exception>
-    /// <exception cref="KeyNotFoundException">The unique identifier does not match an existing task.</exception>
-    public async Task<TaskDto> UpdateTask(TaskDto dto)
+    /// <returns>Result object containing the updated task details, or error details if unsuccessful.</returns>
+    public async Task<TaskActionResult> UpdateTask(TaskDto dto)
     {
-        if (dto.Id is null) throw new InvalidOperationException("ID must be specified.");
+        if (dto.Id is null)
+        {
+            return new TaskActionResult(TaskActionStatus.ValidationError, "ID must be specified.", null);
+        }
+        // DueDate needs to be in the future, but we'll allow a small grace period for anyone setting a due date to the 'current time' on a slow connection
+        if (dto.DueDate < DateTimeOffset.UtcNow.AddSeconds(10))
+        {
+            return new TaskActionResult(TaskActionStatus.ValidationError, "Due date cannot be in the past.", null);
+        }
         
         var existing = await _taskRepository.Get(dto.Id.Value);
-        if (existing == null) throw new KeyNotFoundException("Task not found");
+        if (existing == null)
+        {
+            return new TaskActionResult(TaskActionStatus.NotFound, "Task not found.", null);
+        }
         
         // Update the subset of fields that users can change.
         // In a more realistic example this could be further restricted by permissions (eg, a specific permission required to update DueDate)
@@ -87,7 +112,7 @@ public class TaskModule(IRepository<CaseTrackTask> taskRepository)
         
         await _taskRepository.SaveChanges();
         
-        return ToTaskDto(existing);
+        return new TaskActionResult(TaskActionStatus.Success, null, ToTaskDto(existing));
     }
 
     /// <summary>

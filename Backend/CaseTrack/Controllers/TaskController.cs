@@ -2,6 +2,7 @@
 using CaseTrack.DTOs;
 using CaseTrack.Modules;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace CaseTrack.Controllers;
 
@@ -46,20 +47,18 @@ public class TaskController(TaskModule taskModule) : BaseController
     {
         try
         {
-            if (task.Id.HasValue)
+            var result = task.Id.HasValue ? await taskModule.UpdateTask(task) : await taskModule.InsertTask(task);
+            return result.TaskActionStatus switch
             {
-                return ToApiResponse(await taskModule.UpdateTask(task));
-            }
-
-            return ToApiResponse(await taskModule.InsertTask(task));
+                TaskActionStatus.Success => ToApiResponse(result.Task),
+                TaskActionStatus.NotFound => ToApiError<TaskDto>(null, result.Message, (int)HttpStatusCode.NotFound),
+                TaskActionStatus.ValidationError => ToApiError<TaskDto>(null, result.Message),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
-        catch (InvalidOperationException)
+        catch (Exception)
         {
-            return ToApiError<TaskDto>(null, "Task not valid.");
-        }
-        catch (KeyNotFoundException)
-        {
-            return ToApiError<TaskDto>(null, "Task not found.", (int)HttpStatusCode.NotFound);
+            return ToApiError<TaskDto>(null, "Internal error.", (int)HttpStatusCode.InternalServerError);
         }
     }
 }

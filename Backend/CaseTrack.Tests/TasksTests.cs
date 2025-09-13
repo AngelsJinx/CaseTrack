@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using CaseTrack.DTOs;
 using TaskStatus = CaseTrack.Data.Entities.TaskStatus;
 
@@ -67,7 +68,55 @@ public class TasksTests : BaseTest, IClassFixture<CaseTrackWebAppFactory>
         Assert.Equal("Updated title", updatedDto.Title);
     }
     
-    // TODO prevent updating/inserting with a DueDate in the past
+    [Fact]
+    public async Task UpdateTaskDescription()
+    {
+        var createDto = new TaskDto(null, "A title to keep", "A description to change", TaskStatus.Pending, DateTimeOffset.UtcNow.AddDays(7));
+        var createdDto = await Post(createDto);
+        
+        Assert.Equal(createdDto.Description, createDto.Description);
+
+        var updatedDto = await Post(createdDto with
+        {
+            Description = "Updated description"
+        });
+        
+        Assert.NotNull(updatedDto);
+        Assert.Equal("Updated description", updatedDto.Description);
+    }
+    
+    [Fact]
+    public async Task InsertTaskDueDateInPast()
+    {
+        var createDto = new TaskDto(null, "A task to break", "Trying to set the due date to the past should fail as a bad request.", TaskStatus.Pending, DateTimeOffset.UtcNow.AddDays(-7));
+        var response = await Client.PostAsJsonAsync("api/Task", createDto);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        var responseData = await response.Content.ReadFromJsonAsync<ApiResponseDto<TaskDto>>();
+        Assert.NotNull(responseData);
+        Assert.False(responseData.Success);
+        Assert.Equal("Due date cannot be in the past.", responseData.Message);
+    }
+    
+    [Fact]
+    public async Task UpdateTaskDueDateToPast()
+    {
+        var createDto = new TaskDto(null, "A task to break", "Trying to set the due date to the past should fail as a bad request.", TaskStatus.Pending, DateTimeOffset.UtcNow.AddDays(7));
+        var createdDto = await Post(createDto);
+        
+        Assert.Equal(createdDto.DueDate, createDto.DueDate);
+
+        var response = await Client.PostAsJsonAsync("api/Task", createdDto with
+        {
+            DueDate = DateTimeOffset.UtcNow.AddDays(-3)
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        
+        var responseData = await response.Content.ReadFromJsonAsync<ApiResponseDto<TaskDto>>();
+        Assert.NotNull(responseData);
+        Assert.False(responseData.Success);
+        Assert.Equal("Due date cannot be in the past.", responseData.Message);
+    }
 
     private async Task<TaskDto> Post(TaskDto dto)
     {
