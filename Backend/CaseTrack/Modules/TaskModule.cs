@@ -119,14 +119,18 @@ public class TaskModule(IRepository<CaseTrackTask> taskRepository)
     /// Delete the specified task.
     /// </summary>
     /// <param name="id">Unique identifier for the Task.</param>
-    /// <exception cref="KeyNotFoundException">The unique identifier does not match an existing task.</exception>
-    public async Task DeleteTask(long id)
+    /// <return>Result object with a success status, or error details on failure.</return>
+    public async Task<TaskActionResult> DeleteTask(long id)
     {
         var task = await _taskRepository.Get(id);
-        if (task is null) throw new KeyNotFoundException("Task not found");
+        if (task is null)
+        {
+            return new  TaskActionResult(TaskActionStatus.NotFound, "Task not found.", null);
+        }
         
         _taskRepository.Remove(task);
         await _taskRepository.SaveChanges();
+        return new TaskActionResult(TaskActionStatus.Success, null, null);
     }
 
     /// <summary>

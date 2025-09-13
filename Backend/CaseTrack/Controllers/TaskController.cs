@@ -45,20 +45,30 @@ public class TaskController(TaskModule taskModule) : BaseController
     [HttpPost]
     public async Task<ActionResult<ApiResponseDto<TaskDto>>> Post([FromBody] TaskDto task)
     {
-        try
+        var result = task.Id.HasValue ? await taskModule.UpdateTask(task) : await taskModule.InsertTask(task);
+        return result.TaskActionStatus switch
         {
-            var result = task.Id.HasValue ? await taskModule.UpdateTask(task) : await taskModule.InsertTask(task);
-            return result.TaskActionStatus switch
-            {
-                TaskActionStatus.Success => ToApiResponse(result.Task),
-                TaskActionStatus.NotFound => ToApiError<TaskDto>(null, result.Message, (int)HttpStatusCode.NotFound),
-                TaskActionStatus.ValidationError => ToApiError<TaskDto>(null, result.Message),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-        catch (Exception)
+            TaskActionStatus.Success => ToApiResponse(result.Task),
+            TaskActionStatus.NotFound => ToApiError<TaskDto>(null, result.Message, (int)HttpStatusCode.NotFound),
+            TaskActionStatus.ValidationError => ToApiError<TaskDto>(null, result.Message),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    /// <summary>
+    /// Delete the specified task.
+    /// </summary>
+    /// <param name="id">Unique identifier of the task to remove.</param>
+    /// <returns>Api Response indicating the record was deleted, or details of any error that occurred.</returns>
+    [HttpDelete("{id:long}")]
+    public async Task<ActionResult<ApiResponseDto<TaskDto>>> Delete(long id)
+    {
+        var result = await taskModule.DeleteTask(id);
+        return result.TaskActionStatus switch
         {
-            return ToApiError<TaskDto>(null, "Internal error.", (int)HttpStatusCode.InternalServerError);
-        }
+            TaskActionStatus.Success => ToApiResponse<TaskDto>(null, "Task deleted."),
+            TaskActionStatus.NotFound => ToApiError<TaskDto>(null, result.Message, (int)HttpStatusCode.NotFound),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }

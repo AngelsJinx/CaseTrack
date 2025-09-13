@@ -118,6 +118,23 @@ public class TasksTests : BaseTest, IClassFixture<CaseTrackWebAppFactory>
         Assert.Equal("Due date cannot be in the past.", responseData.Message);
     }
 
+    [Fact]
+    public async Task DeleteTask()
+    {
+        var createDto = new TaskDto(null, "A task to delete", "We can delete this task!", TaskStatus.Pending, DateTimeOffset.UtcNow.AddDays(7));
+        var createdDto = await Post(createDto);
+        
+        Assert.Equal(createdDto.Title,  createDto.Title); // Sanity check
+
+        var deleteResponse = await Client.DeleteAsync($"api/Task/{createdDto.Id}");
+        deleteResponse.EnsureSuccessStatusCode();
+        
+        var delete = await deleteResponse.Content.ReadFromJsonAsync<ApiResponseDto<TaskDto>>();
+        Assert.NotNull(delete);
+        Assert.True(delete.Success);
+        Assert.Equal("Task deleted.", delete.Message);
+    }
+
     private async Task<TaskDto> Post(TaskDto dto)
     {
         var response = await Client.PostAsJsonAsync("api/Task", dto);
