@@ -4,15 +4,18 @@
       <q-card-section class="text-h5 bg-white">
         {{ column.name }}
       </q-card-section>
-      <q-card-section class="task-list">
+      <q-card-section class="task-list q-gutter-y-md">
         <task-display-component v-for="task of taskStore.tasks?.filter(t => t.status === column.status)" :key="task.id!" :task="task" />
       </q-card-section>
     </q-card>
-    <q-page-sticky position="bottom-right" :offset="[18,18]">
-      <q-btn fab icon="add" color="secondary" @click="createNewTask" />
+    <q-page-sticky position="bottom-right" :offset="[34,34]">
+      <q-btn fab round color="secondary" @click="createNewTask">
+        <q-icon name="add" size="lg" />
+        <q-tooltip>Add a new Task</q-tooltip>
+      </q-btn>
     </q-page-sticky>
 
-    <TaskEditDialogComponent v-if="!!editingTask" v-model="showEditDialog" :task="editingTask" @save="console.log" />
+    <TaskEditDialogComponent v-if="!!editingTask" v-model="showEditDialog" :task="editingTask" @save="onSave" />
   </q-page>
 </template>
 
@@ -22,7 +25,10 @@ import {TaskStatus, type Task} from "components/models";
 import {useTaskStore} from "stores/taskStore";
 import { ref } from "vue";
 import TaskEditDialogComponent from "components/TaskEditDialogComponent.vue";
+import {isAxiosError} from "axios";
+import {useQuasar} from "quasar";
 
+const $q = useQuasar();
 const taskStore = useTaskStore();
 const editingTask = ref<Task>();
 const showEditDialog = ref(false);
@@ -30,6 +36,23 @@ const showEditDialog = ref(false);
 function createNewTask() {
   editingTask.value = taskStore.initialiseNewTask();
   showEditDialog.value = true;
+}
+
+async function onSave(updatedTask: Task) {
+  try {
+    const savedTask = await taskStore.saveTask(updatedTask);
+    editingTask.value = savedTask;
+    showEditDialog.value = false;
+  } catch (error) {
+    let errorMessage = "An error occurred while saving the task. Please try again later.";
+    if (isAxiosError(error) && error.response?.data?.message?.length){
+      errorMessage = error.response.data.message;
+    }
+    $q.notify({
+      message: errorMessage,
+      color: 'negative'
+    })
+  }
 }
 
 taskStore.fetchTasks()

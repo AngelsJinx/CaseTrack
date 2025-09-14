@@ -1,22 +1,35 @@
 <template>
-  <q-card class="task-card">
-    <q-card-section class="q-pb-sm row justify-between">
-      <div class="text-h6 col-lg col-xs-12">{{props.task.title}}</div>
-      <div class="col-grow q-my-auto"><q-icon name="event" size="sm" class="q-mr-xs" />Due: {{props.task.dueDate.toLocaleString()}}</div>
-    </q-card-section>
-    <q-card-section class="q-pt-none">
-      <div class="description">{{ props.task.description }}</div>
+  <q-card class="task-card" @mouseover="isHovering = true" @mouseleave="isHovering = false">
+    <q-card-section horizontal>
+      <q-card-section class="q-pb-sm col justify-between">
+        <div class="text-h6">{{props.task.title}}</div>
+        <div class="q-my-auto"><q-icon name="event" size="sm" class="q-mr-xs" />Due: {{props.task.dueDate.toFormat('yyyy-MM-dd')}}</div>
+        <div class="description">
+          <span v-if="props.task.description?.length">{{ props.task.description }}</span>
+          <span v-else class="text-grey">This task has no description</span>
+        </div>
+      </q-card-section>
+      <q-card-section v-show="isHovering" class="q-gutter-sm">
+        <q-btn icon="edit" color="secondary" round class="row">
+          <q-tooltip>Edit</q-tooltip>
+        </q-btn>
+        <q-btn icon="delete" color="negative" round class="row">
+          <q-tooltip>Delete</q-tooltip>
+        </q-btn>
+      </q-card-section>
     </q-card-section>
   </q-card>
 </template>
 <script lang="ts" setup>
 import type {Task} from "components/models";
+import {ref} from "vue";
 
 const props = defineProps<{ task: Task }>();
+const isHovering = ref<boolean>(false);
 </script>
 <style lang="scss" scoped>
 .task-card {
-  min-height: 150px;
+  height: 13em;
   overflow: hidden;
 
   // This fade-long-text-out solution copied from https://css-tricks.com/line-clampin/#aa-the-fade-out-way
