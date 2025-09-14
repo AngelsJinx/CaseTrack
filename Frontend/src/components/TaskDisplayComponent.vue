@@ -10,10 +10,10 @@
         </div>
       </q-card-section>
       <q-card-section v-show="isHovering" class="q-gutter-sm">
-        <q-btn icon="edit" color="secondary" round class="row">
+        <q-btn icon="edit" color="secondary" round class="row" @click="emits('edit', props.task)">
           <q-tooltip>Edit</q-tooltip>
         </q-btn>
-        <q-btn icon="delete" color="negative" round class="row">
+        <q-btn icon="delete" color="negative" round class="row" @click="emits('delete', props.task)">
           <q-tooltip>Delete</q-tooltip>
         </q-btn>
       </q-card-section>
@@ -25,6 +25,11 @@ import type {Task} from "components/models";
 import {ref} from "vue";
 
 const props = defineProps<{ task: Task }>();
+const emits = defineEmits<{
+  (e: 'edit', task: Task): void,
+  (e: 'delete', task: Task): void
+}>()
+
 const isHovering = ref<boolean>(false);
 </script>
 <style lang="scss" scoped>

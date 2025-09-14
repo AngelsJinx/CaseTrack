@@ -23,7 +23,11 @@
             :emit-value="true"
             :map-options="true"
             @update:model-value="userMadeChanges = true" />
-          <q-date v-model="date" class="full-width" @update:model-value="userMadeChanges = true" />
+          <q-date
+            v-model="date"
+            class="full-width"
+            :options="isValidDueDate"
+            @update:model-value="userMadeChanges = true" />
           <q-input v-model="workingTask.description" filled label="Description" type="textarea" @change="userMadeChanges = true" />
         </q-form>
       </q-card-section>
@@ -39,6 +43,7 @@ import {type Task, TaskStatus} from "components/models";
 import {computed, ref, toRaw, watch} from "vue";
 import { cloneDeep } from 'lodash';
 import { useQuasar } from 'quasar';
+import { DateTime } from 'luxon';
 
 
 const $q = useQuasar();
@@ -109,8 +114,18 @@ function discardChangesPrompt() {
 
 async function saveChanges() {
   if (await taskForm.value.validate()) {
+    // Unfortunately q-date works only in strings, so make sure we have a properly-typed datetime before returning
+    workingTask.value.dueDate = DateTime.fromFormat(date.value, 'yyyy/MM/dd');
     emits('save', workingTask.value)
   }
+}
+
+function isValidDueDate(date: string): boolean {
+  const parsedDate = new Date(date);
+  parsedDate.setHours(0, 0, 0, 0);
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  return  parsedDate >= currentDate;
 }
 
 

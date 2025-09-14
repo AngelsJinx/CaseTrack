@@ -3,17 +3,26 @@ import {ref} from "vue";
 import {type ApiResponse, Task, TaskStatus} from "components/models";
 import {api} from "boot/axios";
 import {DateTime} from "luxon";
+import {useQuasar} from "quasar";
 
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref<Task[]>()
+  const $q = useQuasar()
 
   async function fetchTasks() {
-    const response = await api.get<ApiResponse<Task[]>>('/task')
-    tasks.value = response.data.payload.map((task: Task) => {
-      fixSerialization(task)
-      return task
-    })
-    // TODO error handling
+    try {
+      const response = await api.get<ApiResponse<Task[]>>('/task')
+      tasks.value = response.data.payload.map((task: Task) => {
+        fixSerialization(task)
+        return task
+      })
+    } catch {
+      $q.notify({
+        message: 'There was a problem fetching tasks.',
+        color: 'negative'
+      })
+      // Log the error somewhere
+    }
   }
 
   function initialiseNewTask(){
@@ -36,6 +45,16 @@ export const useTaskStore = defineStore('task', () => {
     return savedTask
   }
 
+  async function deleteTask(task: Task) {
+    // Nothing to read from the delete response.
+    await api.delete<ApiResponse<Task>>(`/task/${task.id}`)
+
+    const existingIndex = tasks.value?.findIndex(t => t.id === task.id)
+    if ((existingIndex ?? -1) >= 0) {
+      tasks.value!.splice(existingIndex!, 1)
+    }
+  }
+
   function fixSerialization(task: Task){
     // Axios deserialization is a bit of a nightmare, and gives us a string. It needs to be parsed into a luxon object.
     task.dueDate = DateTime.fromISO((task.dueDate as unknown) as string)
@@ -45,6 +64,7 @@ export const useTaskStore = defineStore('task', () => {
     tasks,
     fetchTasks,
     initialiseNewTask,
-    saveTask
+    saveTask,
+    deleteTask
   }
 })

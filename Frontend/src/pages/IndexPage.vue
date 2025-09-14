@@ -5,7 +5,13 @@
         {{ column.name }}
       </q-card-section>
       <q-card-section class="task-list q-gutter-y-md">
-        <task-display-component v-for="task of taskStore.tasks?.filter(t => t.status === column.status)" :key="task.id!" :task="task" />
+        <task-display-component
+          v-for="task of taskStore.tasks?.filter(t => t.status === column.status)"
+          :key="task.id!"
+          :task="task"
+          @edit="editTask"
+          @delete="requestDelete"
+        />
       </q-card-section>
     </q-card>
     <q-page-sticky position="bottom-right" :offset="[34,34]">
@@ -38,11 +44,60 @@ function createNewTask() {
   showEditDialog.value = true;
 }
 
+function editTask(task: Task) {
+  editingTask.value = task;
+  showEditDialog.value = true;
+}
+
+function requestDelete(task: Task){
+  $q.dialog({
+    title: 'Delete task?',
+    message: 'It will be permanently deleted.',
+    cancel: true,
+    persistent: true,
+    ok: {
+      color: 'negative'
+    }
+  }).onOk(() => {
+    deleteTask(task).catch(console.error); // Should do proper error recording
+  })
+}
+
+async function deleteTask(task: Task){
+  if (!task.id){
+    console.error('Attempted to delete a task without an ID!')
+    // Log this insane edge case!
+  }
+  try {
+    await taskStore.deleteTask(task);
+    $q.notify({
+      message: 'Task deleted',
+      icon: 'delete',
+      color: 'positive',
+    })
+  } catch (error) {
+    let errorMessage = "An error occurred while deleting the task. Please try again later.";
+    if (isAxiosError(error) && error.response?.data?.message?.length){
+      errorMessage = error.response.data.message;
+    }
+    $q.notify({
+      message: errorMessage,
+      color: 'negative'
+    })
+  }
+}
+
 async function onSave(updatedTask: Task) {
   try {
     const savedTask = await taskStore.saveTask(updatedTask);
     editingTask.value = savedTask;
     showEditDialog.value = false;
+
+    $q.notify({
+      message: 'Task saved',
+      icon: 'save',
+      color: 'positive',
+    })
   } catch (error) {
     let errorMessage = "An error occurred while saving the task. Please try again later.";
     if (isAxiosError(error) && error.response?.data?.message?.length){
