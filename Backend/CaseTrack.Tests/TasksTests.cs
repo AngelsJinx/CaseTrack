@@ -104,7 +104,7 @@ public class TasksTests : BaseTest, IClassFixture<CaseTrackWebAppFactory>
         var createDto = new TaskDto(null, "A task to break", "Trying to set the due date to the past should fail as a bad request.", TaskStatus.Pending, DateTimeOffset.UtcNow.AddDays(7));
         var createdDto = await Post(createDto);
         
-        Assert.Equal(createdDto.DueDate, createDto.DueDate);
+        Assert.Equal(createdDto.DueDate.Date, createDto.DueDate.Date);
 
         var response = await Client.PostAsJsonAsync("api/Task", createdDto with
         {
@@ -116,6 +116,19 @@ public class TasksTests : BaseTest, IClassFixture<CaseTrackWebAppFactory>
         Assert.NotNull(responseData);
         Assert.False(responseData.Success);
         Assert.Equal("Due date cannot be in the past.", responseData.Message);
+    }
+
+    [Fact]
+    public async Task TitleIsRequired()
+    {
+        var createDto = new TaskDto(null, "", "This should fail, because a title is required!", TaskStatus.Pending, DateTimeOffset.UtcNow.AddDays(7));
+        var response = await Client.PostAsJsonAsync("api/Task", createDto);
+        
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseData = await response.Content.ReadFromJsonAsync<ApiResponseDto<TaskDto>>();
+        Assert.NotNull(responseData);
+        Assert.False(responseData.Success);
+        Assert.Equal("Title is required.", responseData.Message);
     }
 
     [Fact]

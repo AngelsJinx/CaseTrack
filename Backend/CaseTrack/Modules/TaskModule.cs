@@ -66,6 +66,11 @@ public class TaskModule(IRepository<CaseTrackTask> taskRepository)
             return new TaskActionResult(TaskActionStatus.ValidationError, "Due date cannot be in the past.", null);
         }
 
+        if (String.IsNullOrWhiteSpace(dto.Title))
+        {
+            return new TaskActionResult(TaskActionStatus.ValidationError, "Title is required.", null);
+        }
+
         var newTask = new CaseTrackTask()
         {
             Title = dto.Title,
