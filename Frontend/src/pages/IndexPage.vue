@@ -5,18 +5,32 @@
         {{ column.name }}
       </q-card-section>
       <q-card-section class="task-list">
-        <task-display-component v-for="task of taskStore.tasks?.filter(t => t.status === column.status)" :key="task.id" :task="task" />
+        <task-display-component v-for="task of taskStore.tasks?.filter(t => t.status === column.status)" :key="task.id!" :task="task" />
       </q-card-section>
     </q-card>
+    <q-page-sticky position="bottom-right" :offset="[18,18]">
+      <q-btn fab icon="add" color="secondary" @click="createNewTask" />
+    </q-page-sticky>
+
+    <TaskEditDialogComponent v-if="!!editingTask" v-model="showEditDialog" :task="editingTask" @save="console.log" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import TaskDisplayComponent from "components/TaskDisplayComponent.vue";
-import {TaskStatus} from "components/models";
+import {TaskStatus, type Task} from "components/models";
 import {useTaskStore} from "stores/taskStore";
+import { ref } from "vue";
+import TaskEditDialogComponent from "components/TaskEditDialogComponent.vue";
 
 const taskStore = useTaskStore();
+const editingTask = ref<Task>();
+const showEditDialog = ref(false);
+
+function createNewTask() {
+  editingTask.value = taskStore.initialiseNewTask();
+  showEditDialog.value = true;
+}
 
 taskStore.fetchTasks()
   .catch(console.error); // Should use proper error logging!
@@ -47,7 +61,6 @@ const columns: TaskColumn[] = [
 </script>
 <style lang="scss" scoped>
 .task-list {
-  //height: calc(100% - 55px);
   background-color: $light-grey;
 }
 </style>

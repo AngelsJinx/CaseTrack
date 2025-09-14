@@ -14,14 +14,14 @@ export interface ApiResponse<T> {
 }
 
 export class Task {
-  id: number;
+  id: number | undefined; // Undefined for tasks that haven't been persisted to the back-end yet
   title: string;
   description?: string | undefined;
   status: TaskStatus;
   dueDate: DateTime;
 
   constructor(
-    id: number,
+    id: number | undefined,
     title: string,
     description: string | undefined,
     status: TaskStatus,
