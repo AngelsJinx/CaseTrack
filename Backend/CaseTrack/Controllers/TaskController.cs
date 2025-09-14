@@ -33,7 +33,7 @@ public class TaskController(TaskModule taskModule) : BaseController
         {
             return ToApiError<TaskDto>(null, "Task not found", (int)HttpStatusCode.NotFound);
         }
-        
+
         return ToApiResponse(task);
     }
 
@@ -45,6 +45,20 @@ public class TaskController(TaskModule taskModule) : BaseController
     [HttpPost]
     public async Task<ActionResult<ApiResponseDto<TaskDto>>> Post([FromBody] TaskDto task)
     {
+        // Arbitrary business rule that duedate = end of business day on that date.
+        task = task with
+        {
+            DueDate = new DateTimeOffset(
+                task.DueDate.Year,
+                task.DueDate.Month,
+                task.DueDate.Day,
+                17,
+                0,
+                0,
+                task.DueDate.Offset
+            ).ToUniversalTime() // We also convert to UTC, because life is a whole lot easier if you're consistent!
+        };
+
         var result = task.Id.HasValue ? await taskModule.UpdateTask(task) : await taskModule.InsertTask(task);
         return result.TaskActionStatus switch
         {
