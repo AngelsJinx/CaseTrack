@@ -4,8 +4,8 @@
       <q-card-section class="text-h6">
         {{ workingTask.id ? 'Edit Task' : 'Add Task' }}
       </q-card-section>
-      <q-card-section class="q-gutter-sm q-mx-xs">
-        <q-form ref="taskForm">
+      <q-card-section class="q-mx-xs">
+        <q-form ref="taskForm" class="q-gutter-sm">
           <q-input
             v-model="workingTask.title"
             filled

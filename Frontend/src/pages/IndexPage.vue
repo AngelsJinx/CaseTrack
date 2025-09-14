@@ -1,7 +1,7 @@
 <template>
   <q-page class="row justify-evenly no-wrap">
     <q-card v-for="column of columns" :key="column.status" class="q-mx-sm q-my-md col-xs-6 col-sm-4 col-md-3 col-lg task-list">
-      <q-card-section class="text-h5 bg-white">
+      <q-card-section class="text-h5 bg-white q-my-sm">
         {{ column.name }}
       </q-card-section>
       <q-card-section class="task-list q-gutter-y-md">
@@ -111,6 +111,15 @@ async function onSave(updatedTask: Task) {
 }
 
 taskStore.fetchTasks()
+  .then(() => setTimeout(() => {
+    if (!taskStore.tasks?.length && !showEditDialog.value) {
+      $q.notify({
+        message: 'Create your first task here',
+        position: 'bottom-right',
+        color: 'accent'
+      })
+    }
+  }, 2500))
   .catch(console.error); // Should use proper error logging!
 
 interface TaskColumn {
