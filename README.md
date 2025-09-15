@@ -1,3 +1,7 @@
+# Welcome!
+This is my tech test submission repository. \
+I have included both front-end and back-end projects here. Further details on each project are in the project-specific README.md files.
+
 # Running everything with docker.
 The entire tech test can be stood up using docker compose with a single command: `docker-compose up --build`
 

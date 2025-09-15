@@ -9,6 +9,7 @@
           <q-input
             v-model="workingTask.title"
             filled
+            autofocus
             label="Title"
             :rules="[val => !!val || 'Title is required']"
             @change="userMadeChanges = true" />
